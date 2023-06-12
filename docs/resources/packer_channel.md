@@ -2,12 +2,12 @@
 page_title: "Resource hcp_packer_channel - terraform-provider-hcp"
 subcategory: ""
 description: |-
-  The Packer Channel resource allows you to manage image bucket channels within an active HCP Packer Registry.
+  The Packer Channel resource allows you to manage a bucket channel within an active HCP Packer Registry.
 ---
 
 # hcp_packer_channel (Resource)
 
-The Packer Channel resource allows you to manage image bucket channels within an active HCP Packer Registry.
+The Packer Channel resource allows you to manage a bucket channel within an active HCP Packer Registry.
 
 ## Example Usage
 
@@ -68,13 +68,13 @@ resource "hcp_packer_channel" "staging" {
 
 ### Required
 
-- `bucket_name` (String) The slug of the HCP Packer Registry image bucket where the channel should be created in.
+- `bucket_name` (String) The slug of the HCP Packer Registry image bucket where the channel should be created.
 - `name` (String) The name of the channel being managed.
 
 ### Optional
 
 - `iteration` (Block List, Max: 1) The iteration assigned to the channel. (see [below for nested schema](#nestedblock--iteration))
-- `project_id` (String) The ID of the HCP project where this channel is located in.
+- `project_id` (String) The ID of the HCP project where this channel is located.
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only
@@ -82,7 +82,8 @@ resource "hcp_packer_channel" "staging" {
 - `author_id` (String) The author of this channel.
 - `created_at` (String) The creation time of this channel.
 - `id` (String) The ID of this resource.
-- `organization_id` (String) The ID of the HCP organization where this channel is located in.
+- `organization_id` (String) The ID of the HCP organization where this channel is located.
+- `restricted` (Boolean) If true, the channel is only visible to users with permission to create and manage it. Otherwise the channel is visible to every member of the organization.
 - `updated_at` (String) The time this channel was last updated.
 
 <a id="nestedblock--iteration"></a>
