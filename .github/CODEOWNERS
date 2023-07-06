@@ -4,23 +4,26 @@
 
 # all Consul resources and clients are owned by the cloud-consul team
 *consul* @hashicorp/cloud-consul
-/internal/consul/ @hashicorp/cloud-consul
+/internal/provider/consul/ @hashicorp/cloud-consul
 
 # all Networking resources and clients are owned by the cloud-control-plane team
 *hvn* @hashicorp/cloud-control-plane
 *aws* @hashicorp/cloud-control-plane
 *azure* @hashicorp/cloud-control-plane
 *peering* @hashicorp/cloud-control-plane
+/internal/provider/controlplane/ @hashicorp/cloud-control-plane
 
 # all Packer resources and clients are owned by the cloud-packer team
 *packer* @hashicorp/cloud-packer
+/internal/provider/packer/ @hashicorp/cloud-packer
 
 # all Vault resources and clients are owned by the vault-cloud team
 *vault* @hashicorp/vault-cloud
-
+/internal/provider/vault/ @hashicorp/vault-cloud
 
 # all Boundary resources and clients are owned by the boundary-cloud team
 *boundary* @hashicorp/boundary-cloud
+/internal/provider/boundary/ @hashicorp/boundary-cloud
 
 # Statuspage.io configuration is owned by the Core SRE team
 /internal/provider/statuspage.go @hashicorp/core-sre 

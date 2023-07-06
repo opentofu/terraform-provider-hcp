@@ -94,12 +94,12 @@ func TestAccConsulCluster(t *testing.T) {
     resourceName := "hcp_consul_cluster.test"
 
     resource.Test(t, resource.TestCase{
-        PreCheck:          func() { testAccPreCheck(t) },
-        ProviderFactories: providerFactories,
+        PreCheck:          func() { testhelpers.PreCheck(t) },
+        ProviderFactories: testhelpers.ProviderFactories(),
         CheckDestroy:      testAccCheckConsulClusterDestroy,
         Steps: []resource.TestStep{
             {
-                Config: testConfig(testAccConsulClusterConfig),
+                Config: testhelpers.TestConfig(testAccConsulClusterConfig),
                 Check: resource.ComposeTestCheckFunc(
                     testAccCheckConsulClusterExists(resourceName),
                     resource.TestCheckResourceAttr(resourceName, "cluster_id", "test-consul-cluster"),
@@ -152,9 +152,9 @@ When executing the test, the following steps are taken for each `TestStep`:
                return fmt.Errorf("no ID is set")
            }
 
-           client := testAccProvider.Meta().(*clients.Client)
+           client := testhelpers.DefaultProvider().Meta().(*clients.Client)
 
-           link, err := buildLinkFromURL(id, ConsulClusterResourceType, client.Config.OrganizationID)
+           link, err := links.BuildLinkFromURL(id, links.ConsulClusterResourceType, client.Config.OrganizationID)
            if err != nil {
                return fmt.Errorf("unable to build link for %q: %v", id, err)
            }
@@ -192,14 +192,14 @@ When executing the test, the following steps are taken for each `TestStep`:
 
    ```go
    func testAccCheckConsulClusterDestroy(s *terraform.State) error {
-       client := testAccProvider.Meta().(*clients.Client)
+       client := testhelpers.DefaultProvider().Meta().(*clients.Client)
 
        for _, rs := range s.RootModule().Resources {
            switch rs.Type {
            case "hcp_consul_cluster":
                id := rs.Primary.ID
 
-               link, err := buildLinkFromURL(id, ConsulClusterResourceType, client.Config.OrganizationID)
+               link, err := links.BuildLinkFromURL(id, links.ConsulClusterResourceType, client.Config.OrganizationID)
                if err != nil {
                    return fmt.Errorf("unable to build link for %q: %v", id, err)
                }

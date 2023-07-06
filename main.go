@@ -29,7 +29,7 @@ func main() {
 	if debugMode {
 		plugin.Serve(&plugin.ServeOpts{
 			Debug:        true,
-			ProviderFunc: provider.New(),
+			ProviderFunc: provider.New,
 			ProviderAddr: "registry.terraform.io/hashicorp/hcp",
 		})
 
@@ -37,6 +37,6 @@ func main() {
 	}
 
 	plugin.Serve(&plugin.ServeOpts{
-		ProviderFunc: provider.New(),
+		ProviderFunc: provider.New,
 	})
 }

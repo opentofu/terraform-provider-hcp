@@ -6,7 +6,6 @@ package provider
 import (
 	"context"
 	"os"
-	"time"
 
 	"github.com/hashicorp/hcp-sdk-go/clients/cloud-resource-manager/stable/2019-12-10/client/organization_service"
 	"github.com/hashicorp/hcp-sdk-go/clients/cloud-resource-manager/stable/2019-12-10/client/project_service"
@@ -16,83 +15,94 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	"github.com/hashicorp/terraform-provider-hcp/internal/clients"
+	"github.com/hashicorp/terraform-provider-hcp/internal/location"
+	"github.com/hashicorp/terraform-provider-hcp/internal/provider/boundary"
+	"github.com/hashicorp/terraform-provider-hcp/internal/provider/consul"
+	"github.com/hashicorp/terraform-provider-hcp/internal/provider/controlplane/aws"
+	"github.com/hashicorp/terraform-provider-hcp/internal/provider/controlplane/azure"
+	"github.com/hashicorp/terraform-provider-hcp/internal/provider/controlplane/hvn"
+	"github.com/hashicorp/terraform-provider-hcp/internal/provider/packer"
+	"github.com/hashicorp/terraform-provider-hcp/internal/provider/testhelpers"
+	"github.com/hashicorp/terraform-provider-hcp/internal/provider/vault"
 	"github.com/hashicorp/terraform-provider-hcp/version"
 )
 
-func New() func() *schema.Provider {
-	return func() *schema.Provider {
-		p := &schema.Provider{
-			DataSourcesMap: map[string]*schema.Resource{
-				"hcp_aws_network_peering":            dataSourceAwsNetworkPeering(),
-				"hcp_aws_transit_gateway_attachment": dataSourceAwsTransitGatewayAttachment(),
-				"hcp_azure_peering_connection":       dataSourceAzurePeeringConnection(),
-				"hcp_boundary_cluster":               dataSourceBoundaryCluster(),
-				"hcp_consul_agent_helm_config":       dataSourceConsulAgentHelmConfig(),
-				"hcp_consul_agent_kubernetes_secret": dataSourceConsulAgentKubernetesSecret(),
-				"hcp_consul_cluster":                 dataSourceConsulCluster(),
-				"hcp_consul_versions":                dataSourceConsulVersions(),
-				"hcp_hvn":                            dataSourceHvn(),
-				"hcp_hvn_peering_connection":         dataSourceHvnPeeringConnection(),
-				"hcp_hvn_route":                      dataSourceHVNRoute(),
-				"hcp_packer_bucket_names":            dataSourcePackerBucketNames(),
-				"hcp_packer_image_iteration":         dataSourcePackerImageIteration(),
-				"hcp_packer_image":                   dataSourcePackerImage(),
-				"hcp_packer_iteration":               dataSourcePackerIteration(),
-				"hcp_packer_run_task":                dataSourcePackerRunTask(),
-				"hcp_vault_cluster":                  dataSourceVaultCluster(),
-				"hcp_vault_secrets_app":              dataSourceVaultSecretsApp(),
-			},
-			ResourcesMap: map[string]*schema.Resource{
-				"hcp_aws_network_peering":            resourceAwsNetworkPeering(),
-				"hcp_aws_transit_gateway_attachment": resourceAwsTransitGatewayAttachment(),
-				"hcp_azure_peering_connection":       resourceAzurePeeringConnection(),
-				"hcp_boundary_cluster":               resourceBoundaryCluster(),
-				"hcp_consul_cluster":                 resourceConsulCluster(),
-				"hcp_consul_cluster_root_token":      resourceConsulClusterRootToken(),
-				"hcp_consul_snapshot":                resourceConsulSnapshot(),
-				"hcp_hvn":                            resourceHvn(),
-				"hcp_hvn_peering_connection":         resourceHvnPeeringConnection(),
-				"hcp_hvn_route":                      resourceHvnRoute(),
-				"hcp_packer_channel":                 resourcePackerChannel(),
-				"hcp_packer_channel_assignment":      resourcePackerChannelAssignment(),
-				"hcp_packer_run_task":                resourcePackerRunTask(),
-				"hcp_vault_cluster":                  resourceVaultCluster(),
-				"hcp_vault_cluster_admin_token":      resourceVaultClusterAdminToken(),
-			},
-			Schema: map[string]*schema.Schema{
-				"client_id": {
-					Type:        schema.TypeString,
-					Optional:    true,
-					DefaultFunc: schema.EnvDefaultFunc("HCP_CLIENT_ID", nil),
-					Description: "The OAuth2 Client ID for API operations.",
-				},
-				"client_secret": {
-					Type:        schema.TypeString,
-					Optional:    true,
-					DefaultFunc: schema.EnvDefaultFunc("HCP_CLIENT_SECRET", nil),
-					Description: "The OAuth2 Client Secret for API operations.",
-				},
-				"project_id": {
-					Type:         schema.TypeString,
-					Optional:     true,
-					DefaultFunc:  schema.EnvDefaultFunc("HCP_PROJECT_ID", nil),
-					ValidateFunc: validation.IsUUID,
-					Description:  "The default project in which resources should be created.",
-				},
-			},
-			ProviderMetaSchema: map[string]*schema.Schema{
-				"module_name": {
-					Type:        schema.TypeString,
-					Optional:    true,
-					Description: "The name of the module used with the provider. Should be set in the terraform config block of the module.",
-				},
-			},
-		}
+func init() {
+	testhelpers.InitializeHCPProviderFactory(New)
+}
 
-		p.ConfigureContextFunc = configure(p)
-
-		return p
+func New() *schema.Provider {
+	p := &schema.Provider{
+		DataSourcesMap: map[string]*schema.Resource{
+			"hcp_aws_network_peering":            aws.DataSourceAwsNetworkPeering(),
+			"hcp_aws_transit_gateway_attachment": aws.DataSourceAwsTransitGatewayAttachment(),
+			"hcp_azure_peering_connection":       azure.DataSourceAzurePeeringConnection(),
+			"hcp_boundary_cluster":               boundary.DataSourceBoundaryCluster(),
+			"hcp_consul_agent_helm_config":       consul.DataSourceConsulAgentHelmConfig(),
+			"hcp_consul_agent_kubernetes_secret": consul.DataSourceConsulAgentKubernetesSecret(),
+			"hcp_consul_cluster":                 consul.DataSourceConsulCluster(),
+			"hcp_consul_versions":                consul.DataSourceConsulVersions(),
+			"hcp_hvn":                            hvn.DataSourceHvn(),
+			"hcp_hvn_peering_connection":         hvn.DataSourceHvnPeeringConnection(),
+			"hcp_hvn_route":                      hvn.DataSourceHVNRoute(),
+			"hcp_packer_bucket_names":            packer.DataSourcePackerBucketNames(),
+			"hcp_packer_image_iteration":         packer.DataSourcePackerImageIteration(),
+			"hcp_packer_image":                   packer.DataSourcePackerImage(),
+			"hcp_packer_iteration":               packer.DataSourcePackerIteration(),
+			"hcp_packer_run_task":                packer.DataSourcePackerRunTask(),
+			"hcp_vault_cluster":                  vault.DataSourceVaultCluster(),
+			"hcp_vault_secrets_app":              vault.DataSourceVaultSecretsApp(),
+		},
+		ResourcesMap: map[string]*schema.Resource{
+			"hcp_aws_network_peering":            aws.ResourceAwsNetworkPeering(),
+			"hcp_aws_transit_gateway_attachment": aws.ResourceAwsTransitGatewayAttachment(),
+			"hcp_azure_peering_connection":       azure.ResourceAzurePeeringConnection(),
+			"hcp_boundary_cluster":               boundary.ResourceBoundaryCluster(),
+			"hcp_consul_cluster":                 consul.ResourceConsulCluster(),
+			"hcp_consul_cluster_root_token":      consul.ResourceConsulClusterRootToken(),
+			"hcp_consul_snapshot":                consul.ResourceConsulSnapshot(),
+			"hcp_hvn":                            hvn.ResourceHvn(),
+			"hcp_hvn_peering_connection":         hvn.ResourceHvnPeeringConnection(),
+			"hcp_hvn_route":                      hvn.ResourceHvnRoute(),
+			"hcp_packer_channel":                 packer.ResourcePackerChannel(),
+			"hcp_packer_channel_assignment":      packer.ResourcePackerChannelAssignment(),
+			"hcp_packer_run_task":                packer.ResourcePackerRunTask(),
+			"hcp_vault_cluster":                  vault.ResourceVaultCluster(),
+			"hcp_vault_cluster_admin_token":      vault.ResourceVaultClusterAdminToken(),
+		},
+		Schema: map[string]*schema.Schema{
+			"client_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("HCP_CLIENT_ID", nil),
+				Description: "The OAuth2 Client ID for API operations.",
+			},
+			"client_secret": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("HCP_CLIENT_SECRET", nil),
+				Description: "The OAuth2 Client Secret for API operations.",
+			},
+			"project_id": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				DefaultFunc:  schema.EnvDefaultFunc("HCP_PROJECT_ID", nil),
+				ValidateFunc: validation.IsUUID,
+				Description:  "The default project in which resources should be created.",
+			},
+		},
+		ProviderMetaSchema: map[string]*schema.Schema{
+			"module_name": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The name of the module used with the provider. Should be set in the terraform config block of the module.",
+			},
+		},
 	}
+
+	p.ConfigureContextFunc = configure(p)
+
+	return p
 }
 
 func configure(p *schema.Provider) func(context.Context, *schema.ResourceData) (interface{}, diag.Diagnostics) {
@@ -195,22 +205,8 @@ func getProjectFromCredentials(ctx context.Context, client *clients.Client) (pro
 			Summary:  "There is more than one project associated with the organization of the configured credentials.",
 			Detail:   `The oldest project has been selected as the default. To configure which project is used as default, set a project in the HCP provider config block. Resources may also be configured with different projects.`,
 		})
-		return getOldestProject(listProjResp.Payload.Projects), diags
+		return location.GetOldestProject(listProjResp.Payload.Projects), diags
 	}
 	project = listProjResp.Payload.Projects[0]
 	return project, diags
-}
-
-// getOldestProject retrieves the oldest project from a list based on its created_at time.
-func getOldestProject(projects []*models.ResourcemanagerProject) (oldestProj *models.ResourcemanagerProject) {
-	oldestTime := time.Now()
-
-	for _, proj := range projects {
-		projTime := time.Time(proj.CreatedAt)
-		if projTime.Before(oldestTime) {
-			oldestProj = proj
-			oldestTime = projTime
-		}
-	}
-	return oldestProj
 }
