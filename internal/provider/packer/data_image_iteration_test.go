@@ -1,7 +1,7 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
-package packer
+package packer_test
 
 import (
 	"fmt"
@@ -15,22 +15,22 @@ import (
 )
 
 var (
-	acctestAlpineBucket      = fmt.Sprintf("alpine-acc-%s", time.Now().Format("200601021504"))
-	acctestUbuntuBucket      = fmt.Sprintf("ubuntu-acc-%s", time.Now().Format("200601021504"))
-	acctestProductionChannel = fmt.Sprintf("packer-acc-channel-%s", time.Now().Format("200601021504"))
+	alpineBucketSlug      = fmt.Sprintf("alpine-acc-%s", time.Now().Format("200601021504"))
+	ubuntuBucketSlug      = fmt.Sprintf("ubuntu-acc-%s", time.Now().Format("200601021504"))
+	productionChannelSlug = fmt.Sprintf("packer-acc-channel-%s", time.Now().Format("200601021504"))
 )
 
 var (
-	testAccPackerAlpineProductionImage = fmt.Sprintf(`
+	alpineImageConfigProduction = fmt.Sprintf(`
 	data "hcp_packer_image_iteration" "alpine" {
 		bucket_name  = %q
 		channel = %q
-	}`, acctestAlpineBucket, acctestProductionChannel)
-	testAccPackerUbuntuProductionImage = fmt.Sprintf(`
+	}`, alpineBucketSlug, productionChannelSlug)
+	ubuntuImageConfigProduction = fmt.Sprintf(`
 	data "hcp_packer_image_iteration" "ubuntu" {
 		bucket_name  = %q
 		channel = %q
-	}`, acctestUbuntuBucket, acctestProductionChannel)
+	}`, ubuntuBucketSlug, productionChannelSlug)
 )
 
 func TestAcc_dataSourcePacker(t *testing.T) {
@@ -41,9 +41,9 @@ func TestAcc_dataSourcePacker(t *testing.T) {
 		PreCheck:          func() { testhelpers.PreCheck(t, map[string]bool{"aws": false, "azure": false}) },
 		ProviderFactories: testhelpers.ProviderFactories(),
 		CheckDestroy: func(*terraform.State) error {
-			deleteChannel(t, acctestAlpineBucket, acctestProductionChannel, false)
-			deleteIteration(t, acctestAlpineBucket, fingerprint, false)
-			deleteBucket(t, acctestAlpineBucket, false)
+			deleteChannel(t, alpineBucketSlug, productionChannelSlug, false)
+			deleteIteration(t, alpineBucketSlug, fingerprint, false)
+			deleteBucket(t, alpineBucketSlug, false)
 			return nil
 		},
 
@@ -53,16 +53,16 @@ func TestAcc_dataSourcePacker(t *testing.T) {
 			{
 				PreConfig: func() {
 					upsertRegistry(t)
-					upsertBucket(t, acctestAlpineBucket)
-					upsertIteration(t, acctestAlpineBucket, fingerprint)
-					itID, err := getIterationIDFromFingerPrint(t, acctestAlpineBucket, fingerprint)
+					upsertBucket(t, alpineBucketSlug)
+					upsertIteration(t, alpineBucketSlug, fingerprint)
+					itID, err := getIterationIDFromFingerPrint(t, alpineBucketSlug, fingerprint)
 					if err != nil {
 						t.Fatal(err.Error())
 					}
-					upsertBuild(t, acctestAlpineBucket, fingerprint, itID)
-					upsertChannel(t, acctestAlpineBucket, acctestProductionChannel, itID)
+					upsertBuild(t, alpineBucketSlug, fingerprint, itID)
+					upsertChannel(t, alpineBucketSlug, productionChannelSlug, itID)
 				},
-				Config: testhelpers.TestConfig(testAccPackerAlpineProductionImage),
+				Config: testhelpers.TestConfig(alpineImageConfigProduction),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceName, "organization_id"),
 					resource.TestCheckResourceAttrSet(resourceName, "project_id"),
@@ -81,9 +81,9 @@ func TestAcc_dataSourcePacker_revokedIteration(t *testing.T) {
 		PreCheck:          func() { testhelpers.PreCheck(t, map[string]bool{"aws": false, "azure": false}) },
 		ProviderFactories: testhelpers.ProviderFactories(),
 		CheckDestroy: func(*terraform.State) error {
-			deleteChannel(t, acctestUbuntuBucket, acctestProductionChannel, false)
-			deleteIteration(t, acctestUbuntuBucket, fingerprint, false)
-			deleteBucket(t, acctestUbuntuBucket, false)
+			deleteChannel(t, ubuntuBucketSlug, productionChannelSlug, false)
+			deleteIteration(t, ubuntuBucketSlug, fingerprint, false)
+			deleteBucket(t, ubuntuBucketSlug, false)
 			return nil
 		},
 
@@ -91,21 +91,21 @@ func TestAcc_dataSourcePacker_revokedIteration(t *testing.T) {
 			{
 				PreConfig: func() {
 					upsertRegistry(t)
-					upsertBucket(t, acctestUbuntuBucket)
-					upsertIteration(t, acctestUbuntuBucket, fingerprint)
-					itID, err := getIterationIDFromFingerPrint(t, acctestUbuntuBucket, fingerprint)
+					upsertBucket(t, ubuntuBucketSlug)
+					upsertIteration(t, ubuntuBucketSlug, fingerprint)
+					itID, err := getIterationIDFromFingerPrint(t, ubuntuBucketSlug, fingerprint)
 					if err != nil {
 						t.Fatal(err.Error())
 					}
-					upsertBuild(t, acctestUbuntuBucket, fingerprint, itID)
-					upsertChannel(t, acctestUbuntuBucket, acctestProductionChannel, itID)
+					upsertBuild(t, ubuntuBucketSlug, fingerprint, itID)
+					upsertChannel(t, ubuntuBucketSlug, productionChannelSlug, itID)
 					// Schedule revocation to the future, otherwise we won't be able to revoke an iteration that
 					// it's assigned to a channel
-					revokeIteration(t, itID, acctestUbuntuBucket, revokeAt)
+					revokeIteration(t, itID, ubuntuBucketSlug, revokeAt)
 					// Sleep to make sure the iteration is revoked when we test
 					time.Sleep(5 * time.Second)
 				},
-				Config: testhelpers.TestConfig(testAccPackerUbuntuProductionImage),
+				Config: testhelpers.TestConfig(ubuntuImageConfigProduction),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceName, "organization_id"),
 					resource.TestCheckResourceAttrSet(resourceName, "project_id"),

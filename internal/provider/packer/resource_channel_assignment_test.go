@@ -1,7 +1,7 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
-package packer
+package packer_test
 
 import (
 	"context"
@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/hashicorp/terraform-provider-hcp/internal/clients"
+	"github.com/hashicorp/terraform-provider-hcp/internal/provider/packer"
 	"github.com/hashicorp/terraform-provider-hcp/internal/provider/testhelpers"
 )
 
@@ -35,7 +36,7 @@ func TestAccPackerChannelAssignment_SimpleSetUnset(t *testing.T) {
 		},
 		ProviderFactories: testhelpers.ProviderFactories(),
 		CheckDestroy: func(state *terraform.State) error {
-			if err := testAccCheckAssignmentDestroyed(baseAssignment.ResourceName())(state); err != nil {
+			if err := checkAssignmentDestroyed(baseAssignment.ResourceName())(state); err != nil {
 				t.Error(err)
 			}
 			deleteBucket(t, bucketSlug, true)
@@ -50,7 +51,7 @@ func TestAccPackerChannelAssignment_SimpleSetUnset(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckAssignmentStateBucketAndChannelName(baseAssignment.ResourceName(), bucketSlug, channelSlug),
 					testAccCheckAssignmentStateMatchesIteration(baseAssignment.ResourceName(), &iteration),
-					testAccCheckAssignmentStateMatchesAPI(baseAssignment.ResourceName()),
+					checkAssignmentStateMatchesAPI(baseAssignment.ResourceName()),
 				),
 			},
 			{ // Validate importing channel assignments that are already set
@@ -62,12 +63,12 @@ func TestAccPackerChannelAssignment_SimpleSetUnset(t *testing.T) {
 			{ // Set channel assignment to null
 				Config: testhelpers.BuildTestConfig(testAccPackerAssignmentBuilderFromAssignment(
 					baseAssignment,
-					``, fmt.Sprintf("%q", unassignString), ``,
+					``, fmt.Sprintf("%q", packer.UnassignString), ``,
 				)),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckAssignmentStateBucketAndChannelName(baseAssignment.ResourceName(), bucketSlug, channelSlug),
 					testAccCheckAssignmentStateMatchesIteration(baseAssignment.ResourceName(), nil),
-					testAccCheckAssignmentStateMatchesAPI(baseAssignment.ResourceName()),
+					checkAssignmentStateMatchesAPI(baseAssignment.ResourceName()),
 				),
 			},
 			{ // Validate importing channel assignments that are null
@@ -129,7 +130,7 @@ func TestAccPackerChannelAssignment_AssignLatest(t *testing.T) {
 				testAccCheckAssignmentStateBucketAndChannelName(assignmentResource.ResourceName(), bucketSlug, channelSlug),
 				testAccCheckAssignmentStateMatchesIteration(assignmentResource.ResourceName(), &iteration),
 				testAccCheckAssignmentStateMatchesChannelState(assignmentResource.ResourceName(), channelResource.ResourceName()),
-				testAccCheckAssignmentStateMatchesAPI(assignmentResource.ResourceName()),
+				checkAssignmentStateMatchesAPI(assignmentResource.ResourceName()),
 			),
 		}
 	}
@@ -337,7 +338,7 @@ func TestAccPackerChannelAssignment_EnforceNull(t *testing.T) {
 			testAccCheckAssignmentStateBucketAndChannelName(assignment.ResourceName(), bucketSlug, channelSlug),
 			testAccCheckAssignmentStateMatchesIteration(assignment.ResourceName(), nil),
 			testAccCheckAssignmentStateMatchesChannelState(assignment.ResourceName(), channel.ResourceName()),
-			testAccCheckAssignmentStateMatchesAPI(assignment.ResourceName()),
+			checkAssignmentStateMatchesAPI(assignment.ResourceName()),
 		)
 
 		return []resource.TestStep{
@@ -361,9 +362,9 @@ func TestAccPackerChannelAssignment_EnforceNull(t *testing.T) {
 
 	var generatedSteps []resource.TestStep
 	// Add null ID steps
-	generatedSteps = append(generatedSteps, generateEnforceNullCheckSteps(fmt.Sprintf("%q", unassignString), ``, ``)...)
+	generatedSteps = append(generatedSteps, generateEnforceNullCheckSteps(fmt.Sprintf("%q", packer.UnassignString), ``, ``)...)
 	// Add null Fingerprint steps
-	generatedSteps = append(generatedSteps, generateEnforceNullCheckSteps(``, fmt.Sprintf("%q", unassignString), ``)...)
+	generatedSteps = append(generatedSteps, generateEnforceNullCheckSteps(``, fmt.Sprintf("%q", packer.UnassignString), ``)...)
 	// Add null Version steps
 	generatedSteps = append(generatedSteps, generateEnforceNullCheckSteps(``, ``, `0`)...)
 
@@ -490,12 +491,12 @@ func testAccCheckAssignmentStateMatchesIteration(resourceName string, iterationP
 
 		iterID := iteration.ID
 		if iterID == "" {
-			iterID = unassignString
+			iterID = packer.UnassignString
 		}
 
 		iterFingerprint := iteration.Fingerprint
 		if iterFingerprint == "" {
-			iterFingerprint = unassignString
+			iterFingerprint = packer.UnassignString
 		}
 
 		return resource.ComposeAggregateTestCheckFunc(
@@ -506,7 +507,7 @@ func testAccCheckAssignmentStateMatchesIteration(resourceName string, iterationP
 	}
 }
 
-func testAccPullIterationFromAPIWithAssignmentState(resourceName string, state *terraform.State) (*models.HashicorpCloudPackerIteration, error) {
+func pullIterationFromAPIWithAssignmentState(resourceName string, state *terraform.State) (*models.HashicorpCloudPackerIteration, error) {
 	client := testhelpers.DefaultProvider().Meta().(*clients.Client)
 
 	loc, _ := testhelpers.GetLocationFromState(resourceName, state)
@@ -528,9 +529,9 @@ func testAccPullIterationFromAPIWithAssignmentState(resourceName string, state *
 	return channel.Iteration, nil
 }
 
-func testAccCheckAssignmentStateMatchesAPI(resourceName string) resource.TestCheckFunc {
+func checkAssignmentStateMatchesAPI(resourceName string) resource.TestCheckFunc {
 	return func(state *terraform.State) error {
-		iteration, err := testAccPullIterationFromAPIWithAssignmentState(resourceName, state)
+		iteration, err := pullIterationFromAPIWithAssignmentState(resourceName, state)
 		if err != nil {
 			return err
 		}
@@ -538,9 +539,9 @@ func testAccCheckAssignmentStateMatchesAPI(resourceName string) resource.TestChe
 	}
 }
 
-func testAccCheckAssignmentDestroyed(resourceName string) resource.TestCheckFunc {
+func checkAssignmentDestroyed(resourceName string) resource.TestCheckFunc {
 	return func(state *terraform.State) error {
-		iteration, err := testAccPullIterationFromAPIWithAssignmentState(resourceName, state)
+		iteration, err := pullIterationFromAPIWithAssignmentState(resourceName, state)
 		if err != nil {
 			return fmt.Errorf("Unexpected error while validating channel assignment destruction. Got %v", err)
 		} else if iteration != nil && (iteration.ID != "" || iteration.Fingerprint != "" || iteration.IncrementalVersion != 0) {

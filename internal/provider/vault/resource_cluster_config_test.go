@@ -1,13 +1,14 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
-package vault
+package vault_test
 
 import (
 	"strings"
 	"testing"
 
 	vaultmodels "github.com/hashicorp/hcp-sdk-go/clients/cloud-vault-service/stable/2020-11-25/models"
+	"github.com/hashicorp/terraform-provider-hcp/internal/provider/vault"
 )
 
 func TestGetValidObservabilityConfig(t *testing.T) {
@@ -66,7 +67,7 @@ func TestGetValidObservabilityConfig(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		_, diags := getValidObservabilityConfig(c.config)
+		_, diags := vault.GetValidObservabilityConfig(c.config)
 		foundError := false
 		if diags.HasError() {
 			for _, d := range diags {
@@ -155,7 +156,7 @@ func TestGetValidMajorVersionUpgradeConfig(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		_, diags := getValidMajorVersionUpgradeConfig(c.config, c.tier)
+		_, diags := vault.GetValidMajorVersionUpgradeConfig(c.config, c.tier)
 		foundError := false
 		if diags.HasError() {
 			for _, d := range diags {

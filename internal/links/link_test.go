@@ -1,7 +1,7 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
-package links
+package links_test
 
 import (
 	"fmt"
@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	sharedmodels "github.com/hashicorp/hcp-sdk-go/clients/cloud-shared/v1/models"
+	"github.com/hashicorp/terraform-provider-hcp/internal/links"
 	"github.com/stretchr/testify/require"
 )
 
@@ -25,7 +26,7 @@ func Test_linkURL(t *testing.T) {
 	t.Run("valid ID", func(t *testing.T) {
 		l := *baseLink
 
-		urn, err := LinkURL(&l)
+		urn, err := links.LinkURL(&l)
 		require.NoError(t, err)
 
 		expected := fmt.Sprintf("/project/%s/%s/%s",
@@ -39,7 +40,7 @@ func Test_linkURL(t *testing.T) {
 		l := *baseLink
 		l.Location.OrganizationID = ""
 
-		_, err := LinkURL(&l)
+		_, err := links.LinkURL(&l)
 		require.NoError(t, err)
 	})
 
@@ -47,7 +48,7 @@ func Test_linkURL(t *testing.T) {
 		l := *baseLink
 		l.Location.ProjectID = ""
 
-		_, err := LinkURL(&l)
+		_, err := links.LinkURL(&l)
 		require.Error(t, err)
 	})
 
@@ -55,7 +56,7 @@ func Test_linkURL(t *testing.T) {
 		l := *baseLink
 		l.Type = ""
 
-		_, err := LinkURL(&l)
+		_, err := links.LinkURL(&l)
 		require.Error(t, err)
 	})
 
@@ -63,7 +64,7 @@ func Test_linkURL(t *testing.T) {
 		l := *baseLink
 		l.ID = ""
 
-		_, err := LinkURL(&l)
+		_, err := links.LinkURL(&l)
 		require.Error(t, err)
 	})
 
@@ -71,7 +72,7 @@ func Test_linkURL(t *testing.T) {
 		l := *baseLink
 		l.Location = nil
 
-		_, err := LinkURL(&l)
+		_, err := links.LinkURL(&l)
 		require.Error(t, err)
 	})
 }
@@ -87,7 +88,7 @@ func Test_parseLinkURL(t *testing.T) {
 			svcType,
 			id)
 
-		l, err := ParseLinkURL(urn, svcType)
+		l, err := links.ParseLinkURL(urn, svcType)
 		require.NoError(t, err)
 
 		require.Equal(t, projID, l.Location.ProjectID)
@@ -101,7 +102,7 @@ func Test_parseLinkURL(t *testing.T) {
 			svcType,
 			id)
 
-		l, err := ParseLinkURL(urn, "")
+		l, err := links.ParseLinkURL(urn, "")
 		require.NoError(t, err)
 
 		require.Equal(t, projID, l.Location.ProjectID)
@@ -115,7 +116,7 @@ func Test_parseLinkURL(t *testing.T) {
 			svcType,
 			id)
 
-		_, err := ParseLinkURL(urn, svcType)
+		_, err := links.ParseLinkURL(urn, svcType)
 		require.Error(t, err)
 	})
 
@@ -125,7 +126,7 @@ func Test_parseLinkURL(t *testing.T) {
 			"",
 			id)
 
-		_, err := ParseLinkURL(urn, svcType)
+		_, err := links.ParseLinkURL(urn, svcType)
 		require.Error(t, err)
 	})
 
@@ -135,7 +136,7 @@ func Test_parseLinkURL(t *testing.T) {
 			"other.hvn",
 			id)
 
-		_, err := ParseLinkURL(urn, svcType)
+		_, err := links.ParseLinkURL(urn, svcType)
 		require.Error(t, err)
 	})
 
@@ -145,7 +146,7 @@ func Test_parseLinkURL(t *testing.T) {
 			svcType,
 			"")
 
-		_, err := ParseLinkURL(urn, svcType)
+		_, err := links.ParseLinkURL(urn, svcType)
 		require.Error(t, err)
 	})
 
@@ -154,7 +155,7 @@ func Test_parseLinkURL(t *testing.T) {
 			svcType,
 			id)
 
-		_, err := ParseLinkURL(urn, svcType)
+		_, err := links.ParseLinkURL(urn, svcType)
 		require.Error(t, err)
 	})
 
@@ -164,7 +165,7 @@ func Test_parseLinkURL(t *testing.T) {
 			svcType,
 			id)
 
-		_, err := ParseLinkURL(urn, svcType)
+		_, err := links.ParseLinkURL(urn, svcType)
 		require.Error(t, err)
 	})
 
@@ -174,7 +175,7 @@ func Test_parseLinkURL(t *testing.T) {
 			svcType,
 			id)
 
-		_, err := ParseLinkURL(urn, svcType)
+		_, err := links.ParseLinkURL(urn, svcType)
 		require.Error(t, err)
 	})
 }

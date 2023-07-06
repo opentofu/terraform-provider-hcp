@@ -1,7 +1,7 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
-package location
+package location_test
 
 import (
 	"testing"
@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-openapi/strfmt"
 	"github.com/hashicorp/hcp-sdk-go/clients/cloud-resource-manager/stable/2019-12-10/models"
+	"github.com/hashicorp/terraform-provider-hcp/internal/location"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -28,7 +29,7 @@ func Test_GetProjectID(t *testing.T) {
 	}
 	for _, testCase := range tests {
 		t.Run(testCase.name, func(t *testing.T) {
-			projID, err := GetProjectID(testCase.resProjID, testCase.clientProj)
+			projID, err := location.GetProjectID(testCase.resProjID, testCase.clientProj)
 			assert.Equal(t, testCase.expectedID, projID)
 
 			if testCase.expectedErr == "" {
@@ -96,7 +97,7 @@ func TestDetermineOldestProject(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 
-			oldestProject := GetOldestProject(testCase.projArray)
+			oldestProject := location.GetOldestProject(testCase.projArray)
 			assert.Equal(t, testCase.expectedProjID, oldestProject.ID)
 
 		})

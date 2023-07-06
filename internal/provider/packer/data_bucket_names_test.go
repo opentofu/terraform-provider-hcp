@@ -1,4 +1,4 @@
-package packer
+package packer_test
 
 import (
 	"testing"
@@ -12,7 +12,7 @@ func TestAcc_dataSourcePackerBucketNames(t *testing.T) {
 	bucket1 := testhelpers.CreateTestSlug(t, "2")
 	bucket2 := testhelpers.CreateTestSlug(t, "3")
 
-	bucketNames := testAccPackerDataBucketNamesBuilder("all")
+	bucketNames := dataBucketNamesConfigBuilder("all")
 	config := testhelpers.BuildTestConfig(bucketNames)
 
 	resource.Test(t, resource.TestCase{
@@ -64,7 +64,7 @@ func TestAcc_dataSourcePackerBucketNames(t *testing.T) {
 	})
 }
 
-func testAccPackerDataBucketNamesBuilder(uniqueName string) testhelpers.ConfigBuilder {
+func dataBucketNamesConfigBuilder(uniqueName string) testhelpers.ConfigBuilder {
 	return testhelpers.NewDataConfigBuilder(
 		"hcp_packer_bucket_names",
 		uniqueName,

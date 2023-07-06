@@ -1,7 +1,7 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
-package packer
+package packer_test
 
 import (
 	"fmt"
@@ -19,20 +19,20 @@ func TestAccPackerChannel(t *testing.T) {
 		PreCheck:          func() { testhelpers.PreCheck(t, map[string]bool{"aws": false, "azure": false}) },
 		ProviderFactories: testhelpers.ProviderFactories(),
 		CheckDestroy: func(*terraform.State) error {
-			deleteBucket(t, acctestAlpineBucket, false)
+			deleteBucket(t, alpineBucketSlug, false)
 			return nil
 		},
 
 		Steps: []resource.TestStep{
 			{
-				PreConfig: func() { upsertBucket(t, acctestAlpineBucket) },
-				Config:    testhelpers.TestConfig(testAccPackerChannelBasic(acctestAlpineBucket, acctestProductionChannel)),
+				PreConfig: func() { upsertBucket(t, alpineBucketSlug) },
+				Config:    testhelpers.TestConfig(channelConfigBasic(alpineBucketSlug, productionChannelSlug)),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceName, "author_id"),
-					resource.TestCheckResourceAttr(resourceName, "bucket_name", acctestAlpineBucket),
+					resource.TestCheckResourceAttr(resourceName, "bucket_name", alpineBucketSlug),
 					resource.TestCheckResourceAttrSet(resourceName, "created_at"),
 					resource.TestCheckResourceAttrSet(resourceName, "id"),
-					resource.TestCheckResourceAttr(resourceName, "name", acctestProductionChannel),
+					resource.TestCheckResourceAttr(resourceName, "name", productionChannelSlug),
 					resource.TestCheckResourceAttrSet(resourceName, "organization_id"),
 					resource.TestCheckResourceAttrSet(resourceName, "project_id"),
 					resource.TestCheckResourceAttrSet(resourceName, "updated_at"),
@@ -66,25 +66,25 @@ func TestAccPackerChannel_AssignedIteration(t *testing.T) {
 		PreCheck:          func() { testhelpers.PreCheck(t, map[string]bool{"aws": false, "azure": false}) },
 		ProviderFactories: testhelpers.ProviderFactories(),
 		CheckDestroy: func(*terraform.State) error {
-			deleteBucket(t, acctestAlpineBucket, false)
+			deleteBucket(t, alpineBucketSlug, false)
 			return nil
 		},
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() {
 					fingerprint := "channel-assigned-iteration"
-					upsertBucket(t, acctestAlpineBucket)
-					upsertIteration(t, acctestAlpineBucket, fingerprint)
-					itID, err := getIterationIDFromFingerPrint(t, acctestAlpineBucket, fingerprint)
+					upsertBucket(t, alpineBucketSlug)
+					upsertIteration(t, alpineBucketSlug, fingerprint)
+					itID, err := getIterationIDFromFingerPrint(t, alpineBucketSlug, fingerprint)
 					if err != nil {
 						t.Fatal(err.Error())
 					}
-					upsertBuild(t, acctestAlpineBucket, fingerprint, itID)
+					upsertBuild(t, alpineBucketSlug, fingerprint, itID)
 				},
-				Config: testhelpers.TestConfig(testAccPackerChannelAssignedLatestIteration(acctestAlpineBucket, acctestProductionChannel)),
+				Config: testhelpers.TestConfig(channelConfigAssignedLatestIteration(alpineBucketSlug, productionChannelSlug)),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceName, "author_id"),
-					resource.TestCheckResourceAttr(resourceName, "bucket_name", acctestAlpineBucket),
+					resource.TestCheckResourceAttr(resourceName, "bucket_name", alpineBucketSlug),
 					resource.TestCheckResourceAttrSet(resourceName, "created_at"),
 					resource.TestCheckResourceAttrSet(resourceName, "id"),
 					resource.TestCheckResourceAttrSet(resourceName, "iteration.0.id"),
@@ -121,28 +121,28 @@ func TestAccPackerChannel_UpdateAssignedIteration(t *testing.T) {
 		PreCheck:          func() { testhelpers.PreCheck(t, map[string]bool{"aws": false, "azure": false}) },
 		ProviderFactories: testhelpers.ProviderFactories(),
 		CheckDestroy: func(*terraform.State) error {
-			deleteBucket(t, acctestAlpineBucket, false)
+			deleteBucket(t, alpineBucketSlug, false)
 			return nil
 		},
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() {
 					fingerprint := "channel-update-it1"
-					upsertBucket(t, acctestAlpineBucket)
-					upsertIteration(t, acctestAlpineBucket, fingerprint)
-					itID, err := getIterationIDFromFingerPrint(t, acctestAlpineBucket, fingerprint)
+					upsertBucket(t, alpineBucketSlug)
+					upsertIteration(t, alpineBucketSlug, fingerprint)
+					itID, err := getIterationIDFromFingerPrint(t, alpineBucketSlug, fingerprint)
 					if err != nil {
 						t.Fatal(err.Error())
 					}
-					upsertBuild(t, acctestAlpineBucket, fingerprint, itID)
+					upsertBuild(t, alpineBucketSlug, fingerprint, itID)
 				},
-				Config: testhelpers.TestConfig(testAccPackerChannelAssignedLatestIteration(acctestAlpineBucket, acctestProductionChannel)),
+				Config: testhelpers.TestConfig(channelConfigAssignedLatestIteration(alpineBucketSlug, productionChannelSlug)),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceName, "author_id"),
 					resource.TestCheckResourceAttrSet(resourceName, "created_at"),
 					resource.TestCheckResourceAttrSet(resourceName, "id"),
-					resource.TestCheckResourceAttr(resourceName, "bucket_name", acctestAlpineBucket),
-					resource.TestCheckResourceAttr(resourceName, "name", acctestProductionChannel),
+					resource.TestCheckResourceAttr(resourceName, "bucket_name", alpineBucketSlug),
+					resource.TestCheckResourceAttr(resourceName, "name", productionChannelSlug),
 					resource.TestCheckResourceAttrSet(resourceName, "iteration.0.id"),
 					resource.TestCheckResourceAttr(resourceName, "iteration.0.fingerprint", "channel-update-it1"),
 				),
@@ -150,23 +150,23 @@ func TestAccPackerChannel_UpdateAssignedIteration(t *testing.T) {
 			{
 				PreConfig: func() {
 					fingerprint := "channel-update-it2"
-					upsertIteration(t, acctestAlpineBucket, fingerprint)
-					itID, err := getIterationIDFromFingerPrint(t, acctestAlpineBucket, fingerprint)
+					upsertIteration(t, alpineBucketSlug, fingerprint)
+					itID, err := getIterationIDFromFingerPrint(t, alpineBucketSlug, fingerprint)
 					if err != nil {
 						t.Fatal(err.Error())
 					}
-					upsertBuild(t, acctestAlpineBucket, fingerprint, itID)
+					upsertBuild(t, alpineBucketSlug, fingerprint, itID)
 				},
-				Config: testhelpers.TestConfig(testAccPackerChannelAssignedLatestIteration(acctestAlpineBucket, acctestProductionChannel)),
+				Config: testhelpers.TestConfig(channelConfigAssignedLatestIteration(alpineBucketSlug, productionChannelSlug)),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceName, "author_id"),
-					resource.TestCheckResourceAttr(resourceName, "bucket_name", acctestAlpineBucket),
+					resource.TestCheckResourceAttr(resourceName, "bucket_name", alpineBucketSlug),
 					resource.TestCheckResourceAttrSet(resourceName, "created_at"),
 					resource.TestCheckResourceAttrSet(resourceName, "id"),
 					resource.TestCheckResourceAttrSet(resourceName, "iteration.0.id"),
 					resource.TestCheckResourceAttrSet(resourceName, "iteration.0.incremental_version"),
 					resource.TestCheckResourceAttr(resourceName, "iteration.0.fingerprint", "channel-update-it2"),
-					resource.TestCheckResourceAttr(resourceName, "name", acctestProductionChannel),
+					resource.TestCheckResourceAttr(resourceName, "name", productionChannelSlug),
 					resource.TestCheckResourceAttrSet(resourceName, "updated_at"),
 				),
 			},
@@ -182,30 +182,30 @@ func TestAccPackerChannel_UpdateAssignedIterationWithFingerprint(t *testing.T) {
 		PreCheck:          func() { testhelpers.PreCheck(t, map[string]bool{"aws": false, "azure": false}) },
 		ProviderFactories: testhelpers.ProviderFactories(),
 		CheckDestroy: func(*terraform.State) error {
-			deleteBucket(t, acctestAlpineBucket, false)
+			deleteBucket(t, alpineBucketSlug, false)
 			return nil
 		},
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() {
-					upsertBucket(t, acctestAlpineBucket)
-					upsertIteration(t, acctestAlpineBucket, fingerprint)
-					itID, err := getIterationIDFromFingerPrint(t, acctestAlpineBucket, fingerprint)
+					upsertBucket(t, alpineBucketSlug)
+					upsertIteration(t, alpineBucketSlug, fingerprint)
+					itID, err := getIterationIDFromFingerPrint(t, alpineBucketSlug, fingerprint)
 					if err != nil {
 						t.Fatal(err.Error())
 					}
-					upsertBuild(t, acctestAlpineBucket, fingerprint, itID)
+					upsertBuild(t, alpineBucketSlug, fingerprint, itID)
 				},
-				Config: testhelpers.TestConfig(testAccPackerChannelIterationFingerprint(acctestAlpineBucket, acctestProductionChannel, fingerprint)),
+				Config: testhelpers.TestConfig(channelConfigIterationFingerprint(alpineBucketSlug, productionChannelSlug, fingerprint)),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceName, "author_id"),
-					resource.TestCheckResourceAttr(resourceName, "bucket_name", acctestAlpineBucket),
+					resource.TestCheckResourceAttr(resourceName, "bucket_name", alpineBucketSlug),
 					resource.TestCheckResourceAttrSet(resourceName, "created_at"),
 					resource.TestCheckResourceAttrSet(resourceName, "id"),
 					resource.TestCheckResourceAttrSet(resourceName, "iteration.0.fingerprint"),
 					resource.TestCheckResourceAttrSet(resourceName, "iteration.0.id"),
 					resource.TestCheckResourceAttrSet(resourceName, "iteration.0.incremental_version"),
-					resource.TestCheckResourceAttr(resourceName, "name", acctestProductionChannel),
+					resource.TestCheckResourceAttr(resourceName, "name", productionChannelSlug),
 					resource.TestCheckResourceAttrSet(resourceName, "updated_at"),
 				),
 			},
@@ -213,7 +213,7 @@ func TestAccPackerChannel_UpdateAssignedIterationWithFingerprint(t *testing.T) {
 	})
 }
 
-var testAccPackerChannelBasic = func(bucketName, channelName string) string {
+var channelConfigBasic = func(bucketName, channelName string) string {
 	return fmt.Sprintf(`
 	resource "hcp_packer_channel" "production" {
 		bucket_name  = %q
@@ -221,7 +221,7 @@ var testAccPackerChannelBasic = func(bucketName, channelName string) string {
 	}`, bucketName, channelName)
 }
 
-var testAccPackerChannelAssignedLatestIteration = func(bucketName, channelName string) string {
+var channelConfigAssignedLatestIteration = func(bucketName, channelName string) string {
 	return fmt.Sprintf(`
 	data "hcp_packer_image_iteration" "test" {
 		bucket_name = %[2]q
@@ -236,7 +236,7 @@ var testAccPackerChannelAssignedLatestIteration = func(bucketName, channelName s
 	}`, channelName, bucketName)
 }
 
-var testAccPackerChannelIterationFingerprint = func(bucketName, channelName, fingerprint string) string {
+var channelConfigIterationFingerprint = func(bucketName, channelName, fingerprint string) string {
 	return fmt.Sprintf(`
 	resource "hcp_packer_channel" "production" {
 		bucket_name  = %q

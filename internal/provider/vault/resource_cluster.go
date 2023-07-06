@@ -1017,10 +1017,10 @@ func getObservabilityConfig(propertyName string, d *schema.ResourceData) (*vault
 		return &emptyConfig, nil
 	}
 
-	return getValidObservabilityConfig(config)
+	return GetValidObservabilityConfig(config)
 }
 
-func getValidObservabilityConfig(config map[string]interface{}) (*vaultmodels.HashicorpCloudVault20201125ObservabilityConfig, diag.Diagnostics) {
+func GetValidObservabilityConfig(config map[string]interface{}) (*vaultmodels.HashicorpCloudVault20201125ObservabilityConfig, diag.Diagnostics) {
 
 	observabilityConfig := vaultmodels.HashicorpCloudVault20201125ObservabilityConfig{}
 
@@ -1099,10 +1099,10 @@ func getMajorVersionUpgradeConfig(d *schema.ResourceData) (*vaultmodels.Hashicor
 		return nil, nil
 	}
 
-	return getValidMajorVersionUpgradeConfig(config, tier)
+	return GetValidMajorVersionUpgradeConfig(config, tier)
 }
 
-func getValidMajorVersionUpgradeConfig(config map[string]interface{}, tier vaultmodels.HashicorpCloudVault20201125Tier) (*vaultmodels.HashicorpCloudVault20201125MajorVersionUpgradeConfig, diag.Diagnostics) {
+func GetValidMajorVersionUpgradeConfig(config map[string]interface{}, tier vaultmodels.HashicorpCloudVault20201125Tier) (*vaultmodels.HashicorpCloudVault20201125MajorVersionUpgradeConfig, diag.Diagnostics) {
 	if tier == vaultmodels.HashicorpCloudVault20201125TierDEV || tier == vaultmodels.HashicorpCloudVault20201125TierSTARTERSMALL {
 		return nil, diag.Errorf("major version configuration is only allowed for STANDARD or PLUS clusters")
 	}

@@ -1,7 +1,7 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
-package packer
+package packer_test
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 )
 
 func TestAcc_dataSourcePackerRunTask(t *testing.T) {
-	runTask := testAccPackerDataRunTaskBuilder("runTask")
+	runTask := dataRunTaskConfigBuilder("runTask")
 	config := testhelpers.BuildTestConfig(runTask)
 
 	resource.Test(t, resource.TestCase{
@@ -26,7 +26,7 @@ func TestAcc_dataSourcePackerRunTask(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: config,
-				Check:  testAccCheckPackerRunTaskStateMatchesAPI(runTask.ResourceName()),
+				Check:  checkRunTaskStateMatchesAPI(runTask.ResourceName()),
 			},
 			{ // Change HMAC and check that it updates in state
 				PreConfig: func() {
@@ -42,13 +42,13 @@ func TestAcc_dataSourcePackerRunTask(t *testing.T) {
 					}
 				},
 				Config: config,
-				Check:  testAccCheckPackerRunTaskStateMatchesAPI(runTask.ResourceName()),
+				Check:  checkRunTaskStateMatchesAPI(runTask.ResourceName()),
 			},
 		},
 	})
 }
 
-func testAccPackerDataRunTaskBuilder(uniqueName string) testhelpers.ConfigBuilder {
+func dataRunTaskConfigBuilder(uniqueName string) testhelpers.ConfigBuilder {
 	return testhelpers.NewDataConfigBuilder(
 		"hcp_packer_run_task",
 		uniqueName,

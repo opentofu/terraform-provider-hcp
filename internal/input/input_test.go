@@ -1,11 +1,12 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
-package input
+package input_test
 
 import (
 	"testing"
 
+	"github.com/hashicorp/terraform-provider-hcp/internal/input"
 	"github.com/stretchr/testify/require"
 )
 
@@ -28,7 +29,7 @@ func Test_NormalizeVersion(t *testing.T) {
 		t.Run(n, func(t *testing.T) {
 			r := require.New(t)
 
-			result := NormalizeVersion(tc.input)
+			result := input.NormalizeVersion(tc.input)
 			r.Equal(tc.expected, result)
 		})
 	}

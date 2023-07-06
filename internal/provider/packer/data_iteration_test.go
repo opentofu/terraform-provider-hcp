@@ -1,7 +1,7 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
-package packer
+package packer_test
 
 import (
 	"fmt"
@@ -15,13 +15,13 @@ import (
 )
 
 var (
-	acctestIterationBucket       = fmt.Sprintf("alpine-acc-itertest-%s", time.Now().Format("200601021504"))
-	acctestIterationUbuntuBucket = fmt.Sprintf("ubuntu-acc-itertest-%s", time.Now().Format("200601021504"))
-	acctestIterationChannel      = "production-iter-test"
+	iterationBucketSlug       = fmt.Sprintf("alpine-acc-itertest-%s", time.Now().Format("200601021504"))
+	iterationUbuntuBucketSlug = fmt.Sprintf("ubuntu-acc-itertest-%s", time.Now().Format("200601021504"))
+	iterationChannelSlug      = "production-iter-test"
 )
 
 var (
-	testAccPackerIterationAlpineProduction = fmt.Sprintf(`
+	iterationConfigAlpineProduction = fmt.Sprintf(`
 	data "hcp_packer_iteration" "alpine" {
 		bucket_name  = %q
 		channel = %q
@@ -30,14 +30,14 @@ var (
 	output "revoke_at" {
   		value = data.hcp_packer_iteration.alpine.revoke_at
 	}
-`, acctestIterationBucket, acctestIterationChannel)
+`, iterationBucketSlug, iterationChannelSlug)
 
-	testAccPackerIterationUbuntuProduction = fmt.Sprintf(`
+	iterationConfigUbuntuProduction = fmt.Sprintf(`
 	data "hcp_packer_iteration" "ubuntu" {
 		bucket_name  = %q
 		channel = %q
 	}
-`, acctestIterationUbuntuBucket, acctestIterationChannel)
+`, iterationUbuntuBucketSlug, iterationChannelSlug)
 )
 
 func TestAcc_dataSourcePackerIteration(t *testing.T) {
@@ -48,9 +48,9 @@ func TestAcc_dataSourcePackerIteration(t *testing.T) {
 		PreCheck:          func() { testhelpers.PreCheck(t, map[string]bool{"aws": false, "azure": false}) },
 		ProviderFactories: testhelpers.ProviderFactories(),
 		CheckDestroy: func(*terraform.State) error {
-			deleteChannel(t, acctestIterationBucket, acctestIterationChannel, false)
-			deleteIteration(t, acctestIterationBucket, fingerprint, false)
-			deleteBucket(t, acctestIterationBucket, false)
+			deleteChannel(t, iterationBucketSlug, iterationChannelSlug, false)
+			deleteIteration(t, iterationBucketSlug, fingerprint, false)
+			deleteBucket(t, iterationBucketSlug, false)
 			return nil
 		},
 
@@ -59,16 +59,16 @@ func TestAcc_dataSourcePackerIteration(t *testing.T) {
 			// works.
 			{
 				PreConfig: func() {
-					upsertBucket(t, acctestIterationBucket)
-					upsertIteration(t, acctestIterationBucket, fingerprint)
-					itID, err := getIterationIDFromFingerPrint(t, acctestIterationBucket, fingerprint)
+					upsertBucket(t, iterationBucketSlug)
+					upsertIteration(t, iterationBucketSlug, fingerprint)
+					itID, err := getIterationIDFromFingerPrint(t, iterationBucketSlug, fingerprint)
 					if err != nil {
 						t.Fatal(err.Error())
 					}
-					upsertBuild(t, acctestIterationBucket, fingerprint, itID)
-					upsertChannel(t, acctestIterationBucket, acctestIterationChannel, itID)
+					upsertBuild(t, iterationBucketSlug, fingerprint, itID)
+					upsertChannel(t, iterationBucketSlug, iterationChannelSlug, itID)
 				},
-				Config: testhelpers.TestConfig(testAccPackerIterationAlpineProduction),
+				Config: testhelpers.TestConfig(iterationConfigAlpineProduction),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceName, "organization_id"),
 					resource.TestCheckResourceAttrSet(resourceName, "project_id"),
@@ -87,9 +87,9 @@ func TestAcc_dataSourcePackerIteration_revokedIteration(t *testing.T) {
 		PreCheck:          func() { testhelpers.PreCheck(t, map[string]bool{"aws": false, "azure": false}) },
 		ProviderFactories: testhelpers.ProviderFactories(),
 		CheckDestroy: func(*terraform.State) error {
-			deleteChannel(t, acctestIterationUbuntuBucket, acctestIterationChannel, false)
-			deleteIteration(t, acctestIterationUbuntuBucket, fingerprint, false)
-			deleteBucket(t, acctestIterationUbuntuBucket, false)
+			deleteChannel(t, iterationUbuntuBucketSlug, iterationChannelSlug, false)
+			deleteIteration(t, iterationUbuntuBucketSlug, fingerprint, false)
+			deleteBucket(t, iterationUbuntuBucketSlug, false)
 			return nil
 		},
 
@@ -97,21 +97,21 @@ func TestAcc_dataSourcePackerIteration_revokedIteration(t *testing.T) {
 			{
 				PreConfig: func() {
 					upsertRegistry(t)
-					upsertBucket(t, acctestIterationUbuntuBucket)
-					upsertIteration(t, acctestIterationUbuntuBucket, fingerprint)
-					itID, err := getIterationIDFromFingerPrint(t, acctestIterationUbuntuBucket, fingerprint)
+					upsertBucket(t, iterationUbuntuBucketSlug)
+					upsertIteration(t, iterationUbuntuBucketSlug, fingerprint)
+					itID, err := getIterationIDFromFingerPrint(t, iterationUbuntuBucketSlug, fingerprint)
 					if err != nil {
 						t.Fatal(err.Error())
 					}
-					upsertBuild(t, acctestIterationUbuntuBucket, fingerprint, itID)
-					upsertChannel(t, acctestIterationUbuntuBucket, acctestIterationChannel, itID)
+					upsertBuild(t, iterationUbuntuBucketSlug, fingerprint, itID)
+					upsertChannel(t, iterationUbuntuBucketSlug, iterationChannelSlug, itID)
 					// Schedule revocation to the future, otherwise we won't be able to revoke an iteration that
 					// it's assigned to a channel
-					revokeIteration(t, itID, acctestIterationUbuntuBucket, revokeAt)
+					revokeIteration(t, itID, iterationUbuntuBucketSlug, revokeAt)
 					// Sleep to make sure the iteration is revoked when we test
 					time.Sleep(5 * time.Second)
 				},
-				Config: testhelpers.TestConfig(testAccPackerIterationUbuntuProduction),
+				Config: testhelpers.TestConfig(iterationConfigUbuntuProduction),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(resourceName, "organization_id"),
 					resource.TestCheckResourceAttrSet(resourceName, "project_id"),

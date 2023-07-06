@@ -1,7 +1,7 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
-package packer
+package packer_test
 
 import (
 	"context"
@@ -16,9 +16,9 @@ import (
 )
 
 func TestAccPackerRunTask(t *testing.T) {
-	runTask := testAccPackerRunTaskBuilder("runTask", `false`)
+	runTask := runTaskConfigBuilder("runTask", `false`)
 	config := testhelpers.BuildTestConfig(runTask)
-	runTaskRegen := testAccPackerRunTaskBuilderFromRunTask(runTask, `true`)
+	runTaskRegen := runTaskConfigBuilderFromRunTask(runTask, `true`)
 	configRegen := testhelpers.BuildTestConfig(runTaskRegen)
 
 	getHmacBeforeStep := func(hmacPtr *string) func() {
@@ -50,13 +50,13 @@ func TestAccPackerRunTask(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: config,
-				Check:  testAccCheckPackerRunTaskStateMatchesAPI(runTask.ResourceName()),
+				Check:  checkRunTaskStateMatchesAPI(runTask.ResourceName()),
 			},
 			{ // Ensure HMAC key is different after apply
 				PreConfig: getHmacBeforeStep(&preStep2HmacKey),
 				Config:    configRegen,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckPackerRunTaskStateMatchesAPI(runTaskRegen.ResourceName()),
+					checkRunTaskStateMatchesAPI(runTaskRegen.ResourceName()),
 					testhelpers.CheckResourceAttrPtrDifferent(runTaskRegen.ResourceName(), "hmac_key", &preStep2HmacKey),
 				),
 				ExpectNonEmptyPlan: true, // `regenerate_hmac = true` creates a perpetual diff
@@ -65,7 +65,7 @@ func TestAccPackerRunTask(t *testing.T) {
 				PreConfig: getHmacBeforeStep(&preStep3HmacKey),
 				Config:    configRegen,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckPackerRunTaskStateMatchesAPI(runTaskRegen.ResourceName()),
+					checkRunTaskStateMatchesAPI(runTaskRegen.ResourceName()),
 					testhelpers.CheckResourceAttrPtrDifferent(runTaskRegen.ResourceName(), "hmac_key", &preStep3HmacKey),
 				),
 				ExpectNonEmptyPlan: true, // `regenerate_hmac = true` creates a perpetual diff
@@ -74,7 +74,7 @@ func TestAccPackerRunTask(t *testing.T) {
 				PreConfig: getHmacBeforeStep(&preStep4HmacKey),
 				Config:    config,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckPackerRunTaskStateMatchesAPI(runTaskRegen.ResourceName()),
+					checkRunTaskStateMatchesAPI(runTaskRegen.ResourceName()),
 					resource.TestCheckResourceAttrPtr(runTask.ResourceName(), "hmac_key", &preStep4HmacKey),
 				),
 			},
@@ -82,7 +82,7 @@ func TestAccPackerRunTask(t *testing.T) {
 	})
 }
 
-func testAccPackerRunTaskBuilder(uniqueName string, regenerateHmac string) testhelpers.ConfigBuilder {
+func runTaskConfigBuilder(uniqueName string, regenerateHmac string) testhelpers.ConfigBuilder {
 	return testhelpers.NewResourceConfigBuilder(
 		"hcp_packer_run_task",
 		uniqueName,
@@ -92,14 +92,14 @@ func testAccPackerRunTaskBuilder(uniqueName string, regenerateHmac string) testh
 	)
 }
 
-func testAccPackerRunTaskBuilderFromRunTask(oldRT testhelpers.ConfigBuilder, regenerateHmac string) testhelpers.ConfigBuilder {
-	return testAccPackerRunTaskBuilder(
+func runTaskConfigBuilderFromRunTask(oldRT testhelpers.ConfigBuilder, regenerateHmac string) testhelpers.ConfigBuilder {
+	return runTaskConfigBuilder(
 		oldRT.UniqueName(),
 		regenerateHmac,
 	)
 }
 
-func testAccPullPackerRunTaskFromAPIWithRunTaskState(resourceName string, state *terraform.State) (*models.HashicorpCloudPackerGetRegistryTFCRunTaskAPIResponse, error) {
+func pullRunTaskFromAPIWithRunTaskState(resourceName string, state *terraform.State) (*models.HashicorpCloudPackerGetRegistryTFCRunTaskAPIResponse, error) {
 	client := testhelpers.DefaultProvider().Meta().(*clients.Client)
 
 	loc, _ := testhelpers.GetLocationFromState(resourceName, state)
@@ -112,7 +112,7 @@ func testAccPullPackerRunTaskFromAPIWithRunTaskState(resourceName string, state 
 	return resp, nil
 }
 
-func testAccCheckPackerRunTaskStateMatchesRunTask(resourceName string, runTaskPtr **models.HashicorpCloudPackerGetRegistryTFCRunTaskAPIResponse) resource.TestCheckFunc {
+func checkRunTaskStateMatchesRunTask(resourceName string, runTaskPtr **models.HashicorpCloudPackerGetRegistryTFCRunTaskAPIResponse) resource.TestCheckFunc {
 	return func(state *terraform.State) error {
 		var runTask *models.HashicorpCloudPackerGetRegistryTFCRunTaskAPIResponse
 		if runTaskPtr != nil {
@@ -129,13 +129,13 @@ func testAccCheckPackerRunTaskStateMatchesRunTask(resourceName string, runTaskPt
 	}
 }
 
-func testAccCheckPackerRunTaskStateMatchesAPI(resourceName string) resource.TestCheckFunc {
+func checkRunTaskStateMatchesAPI(resourceName string) resource.TestCheckFunc {
 	return func(state *terraform.State) error {
-		runTask, err := testAccPullPackerRunTaskFromAPIWithRunTaskState(resourceName, state)
+		runTask, err := pullRunTaskFromAPIWithRunTaskState(resourceName, state)
 		if err != nil {
 			return err
 		}
 
-		return testAccCheckPackerRunTaskStateMatchesRunTask(resourceName, &runTask)(state)
+		return checkRunTaskStateMatchesRunTask(resourceName, &runTask)(state)
 	}
 }
