@@ -95,7 +95,7 @@ func TestAccConsulCluster(t *testing.T) {
 
     resource.Test(t, resource.TestCase{
         PreCheck:          func() { testAccPreCheck(t) },
-        ProviderFactories: providerFactories,
+        ProtoV5ProviderFactories: providerFactories,
         CheckDestroy:      testAccCheckConsulClusterDestroy,
         Steps: []resource.TestStep{
             {

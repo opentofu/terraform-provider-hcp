@@ -34,7 +34,7 @@ var testAccProvider *schema.Provider
 // testAccProvider be errantly reused in ProviderFactories.
 var testAccProviderConfigure sync.Once
 
-var testProtoV5ProviderFactories = map[string]func() (tfprotov5.ProviderServer, error){
+var providerFactories = map[string]func() (tfprotov5.ProviderServer, error){
 	"hcp": func() (tfprotov5.ProviderServer, error) {
 		providers := []func() tfprotov5.ProviderServer{
 			providerserver.NewProtocol5(NewFrameworkProvider(version.ProviderVersion)()),
@@ -44,18 +44,6 @@ var testProtoV5ProviderFactories = map[string]func() (tfprotov5.ProviderServer, 
 	},
 	"dummy": func() (tfprotov5.ProviderServer, error) {
 		return testAccNewDummyProvider().GRPCProvider(), nil
-	},
-}
-
-// providerFactories are used to instantiate a provider during acceptance testing.
-// The factory function will be invoked for every Terraform CLI command executed
-// to create a provider server to which the CLI can reattach.
-var providerFactories = map[string](func() (*schema.Provider, error)){
-	"hcp": func() (*schema.Provider, error) {
-		return New()(), nil
-	},
-	"dummy": func() (*schema.Provider, error) {
-		return testAccNewDummyProvider(), nil
 	},
 }
 

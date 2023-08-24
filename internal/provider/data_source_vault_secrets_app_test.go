@@ -55,7 +55,7 @@ func TestAcc_dataSourceVaultSecretsAppMigration(t *testing.T) {
 				),
 			},
 			{
-				ProtoV5ProviderFactories: testProtoV5ProviderFactories,
+				ProtoV5ProviderFactories: providerFactories,
 				Config: fmt.Sprintf(`
 				data "hcp_vault_secrets_app" "example" {
 					app_name    = %q
@@ -83,7 +83,7 @@ func TestAcc_dataSourceVaultSecretsApp(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t, map[string]bool{}) },
-		ProtoV5ProviderFactories: testProtoV5ProviderFactories,
+		ProtoV5ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			// Create two secrets, one with an additional version and check the latest secrets from data source
 			{
